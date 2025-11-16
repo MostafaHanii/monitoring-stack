@@ -2,14 +2,11 @@ global:
   scrape_interval: 5s
   evaluation_interval: 5s
 scrape_configs:
-  - job_name: 'binance-exporter'
+  - job_name: 'binance-ohlc'
+    scrape_interval: 15s 
     static_configs:
-      - targets: 
-        - 'binance-exporter:9890'
-        - 'binance-exporter:9892'
-        - 'binance-exporter:9894'
-        - 'binance-exporter:9896'
-        - 'binance-exporter:9898'
+      # Use the Docker service name 'ohlc-exporter'
+      - targets: ['ohlc-exporter:9001']
   - job_name: 'grafana'
     metrics_path: '/metrics'
     static_configs:

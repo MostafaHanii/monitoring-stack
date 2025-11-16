@@ -1,60 +1,53 @@
 version: '3.8'
-networks:
-  monitoring:
-    driver: bridge
+
 services:
+  # 1. New Custom Exporter Service
+  ohlc-exporter:
+    build:
+      context: ./ohlc-exporter # Build from the ohlc-exporter folder
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001" # Expose for debugging/inspection (optional)
+    restart: unless-stopped
+    # volumes: (Not strictly needed if all code is built into the image)
+
+  # 2. Prometheus Service
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
     ports:
-      - "9080:9080"
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml # Mount config
+      - prometheus_data:/prometheus # Persistent data volume
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --web.console.libraries=/usr/share/prometheus/console_libraries
-      - --web.console.templates=/usr/share/prometheus/consoles
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.listen-address=:9090'
     restart: unless-stopped
-    networks:
-      - monitoring
+    depends_on:
+      - ohlc-exporter # Ensure the exporter starts first
+
+  # 3. Grafana Service (Provisioning)
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana
+      # 1. Datasource Provisioning (Maps to /etc/grafana/provisioning/datasources/)
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      
+      # 2. Dashboard Provider Config (Maps the provider.yml to /etc/grafana/provisioning/dashboards/)
+      # This tells Grafana *how* to load dashboards.
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards 
+      
+      # 3. Dashboard JSON Files (Maps to /var/lib/grafana/dashboards)
+      # This is the directory containing the actual binance_ohlc_dashboard.json file.
+      - ./grafana/dashboards:/var/lib/grafana/dashboards 
     environment:
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-      - GF_PROMETHEUS_URL=http://prometheus:9090
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
     restart: unless-stopped
-    networks:
-      - monitoring
-    depends_on:
-      - prometheus
-  binance-exporter:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: binance-exporter
-    # The internal port 9898 is exposed for Prometheus to scrape
-    ports:
-      - "9890:9890" # BTC Exporter
-      - "9894:9894" # ETH Exporter
-      - "9892:9892" # BNB Exporter
-      - "9896:9896" # SOL Exporter
-      - "9898:9898" # XRP Exporter
-    restart: unless-stopped
-    networks:
-      - monitoring
     depends_on:
       - prometheus
 volumes:
   prometheus_data:
-    driver: local
   grafana_data:
-    driver: local

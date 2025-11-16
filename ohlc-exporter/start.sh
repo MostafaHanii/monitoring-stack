@@ -13,11 +13,7 @@ function launch_exporter() {
 
 # --- Launch All 5 Exporters ---
 # Replace 'python /app/exporterX.py' with the actual command for each of your 5 exporters.
-launch_exporter "BTC Exporter" "python /app/btc_exporter.py --port 9890"
-launch_exporter "ETH Exporter" "python /app/eth_exporter.py --port 9894"
-launch_exporter "BNB Exporter" "python /app/bnb_exporter.py --port 9892"
-launch_exporter "SOL Exporter" "python /app/sol_exporter.py --port 9896"
-launch_exporter "XRP Exporter" "python /app/xrp_exporter.py --port 9898"
+launch_exporter "Binance Exporter" "python /app/binance_exporter.py --port 9890"
 
 # --- Main Waiting Loop ---
 # This loop is crucial: it waits until one of the background processes exits.
