@@ -1,0 +1,13 @@
+# Host Path: ./grafana/provisioning/dashboards/provider.yml
+
+apiVersion: 1
+providers:
+  - name: 'Binance OHLC Data'
+    orgId: 1
+    folder: 'Crypto Trading Data'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 10
+    options:
+      # CRITICAL: This path must match the JSON mount path in docker-compose.yml
+      path: /var/lib/grafana/dashboards

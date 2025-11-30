@@ -1,0 +1,11 @@
+# Dependency folders
+venv/
+__pycache__/
+
+# Docker files
+*.log
+docker-compose.override.yml
+
+# Persistent data volumes (DO NOT PUSH THESE)
+prometheus_data/
+grafana_data/
