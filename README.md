@@ -2,8 +2,6 @@
 
 A robust, containerized pipeline for real-time monitoring and historical analysis of cryptocurrency OHLC (Open, High, Low, Close) candle data from Binance.
 
-![Monitoring Pipeline Diagram](assets/pipeline_diagram.png)
-
 ---
 
 ## 🏗️ System Architecture
