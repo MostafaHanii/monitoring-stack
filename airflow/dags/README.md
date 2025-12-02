@@ -13,7 +13,7 @@ You can create DAGs for:
 - Daily aggregations
 - Kafka health monitoring
 - Data cleanup tasks
-- InfluxDB maintenance
+
 
 ## Note
 

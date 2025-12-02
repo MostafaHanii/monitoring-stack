@@ -14,8 +14,7 @@ The pipeline consists of four main stages:
 2.  **Streaming**: Kafka acts as the central message broker.
 3.  **Processing**:
     *   `prometheus-consumer`: Aggregates real-time metrics.
-    *   `influxdb-consumer`: Stores historical data.
-4.  **Visualization**: Grafana dashboards powered by Prometheus and InfluxDB.
+4.  **Visualization**: Grafana dashboards powered by Prometheus.
 
 ---
 
@@ -25,7 +24,6 @@ The pipeline consists of four main stages:
 |---------|------|-------------|-------------|
 | **Grafana** | `3000` | Main Dashboard UI | `admin` / `password` |
 | **Prometheus** | `9090` | Metrics Query UI | - |
-| **InfluxDB** | `8086` | Time-series Database | `admin` / `password123` |
 | **Metrics** | `9001` | Raw Consumer Metrics | - |
 | **Kafka** | `9092` | Message Broker | - |
 
@@ -42,10 +40,6 @@ The pipeline consists of four main stages:
 
 ### ⚡ Prometheus Consumer (`prometheus-consumer/`)
 *   **`prometheus_consumer.py`**: Real-time processor. Consumes Kafka messages, updates Prometheus Gauge metrics (Price, Volume), and handles connection retries.
-*   **`Dockerfile`**: Builds the consumer container.
-
-### 💾 InfluxDB Consumer (`influxdb-consumer/`)
-*   **`influxdb_consumer.py`**: Storage processor. Consumes Kafka messages and writes data points to InfluxDB for long-term storage and historical analysis.
 *   **`Dockerfile`**: Builds the consumer container.
 
 ### 📊 Configuration (`grafana/`, `prometheus/`)
@@ -68,7 +62,7 @@ docker-compose up -d
 ### 2. Verify Data Flow
 *   **Grafana**: [http://localhost:3000](http://localhost:3000)
 *   **Prometheus**: [http://localhost:9090](http://localhost:9090)
-*   **InfluxDB**: [http://localhost:8086](http://localhost:8086)
+
 *   **Kafka**: [http://localhost:9092](http://localhost:9092)
 
 

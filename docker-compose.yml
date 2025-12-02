@@ -70,43 +70,6 @@ services:
       METRICS_PORT: 9001
     restart: unless-stopped
 
-  # InfluxDB
-  influxdb:
-    image: influxdb:2.7-alpine
-    container_name: influxdb
-    ports:
-      - "8086:8086"
-    environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: admin
-      DOCKER_INFLUXDB_INIT_PASSWORD: password123
-      DOCKER_INFLUXDB_INIT_ORG: myorg
-      DOCKER_INFLUXDB_INIT_BUCKET: crypto_data
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: mytoken123
-      DOCKER_INFLUXDB_INIT_RETENTION: 0s
-    volumes:
-      - influxdb_data:/var/lib/influxdb2
-    restart: unless-stopped
-
-  # InfluxDB Consumer - Consumes from Kafka and writes to InfluxDB
-  influxdb-consumer:
-    build:
-      context: ./influxdb-consumer
-      dockerfile: Dockerfile
-    container_name: influxdb-consumer
-    depends_on:
-      - kafka
-      - influxdb
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      KAFKA_TOPIC: binance_kline
-      KAFKA_GROUP_ID: influxdb_consumer_group
-      INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: mytoken123
-      INFLUXDB_ORG: myorg
-      INFLUXDB_BUCKET: crypto_data
-    restart: unless-stopped
-
   # ========================================
   # AIRFLOW SERVICES
   # ========================================
@@ -216,5 +179,5 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
-  influxdb_data:
+
   airflow_postgres_data:
