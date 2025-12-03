@@ -15,7 +15,7 @@ KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092
 KAFKA_TOPIC = os.environ.get("KAFKA_TOPIC", "binance_kline")
 
 # Binance WebSocket URL for 5 coins on 1m kline stream
-BINANCE_WS_URL = "wss://stream.binance.com:9443/stream?streams=solusdt@kline_1m/btcusdt@kline_1m/bnbusdt@kline_1m/xrpusdt@kline_1m/ethusdt@kline_1m"
+BINANCE_WS_URL = "wss://stream.binance.com:9443/stream?streams=solusdt@kline_1m/btcusdt@kline_1m/bnbusdt@kline_1m/xrpusdt@kline_1m/ethusdt@kline_1m/adausdt@kline_1m/bchusdt@kline_1m/dogeusdt@kline_1m/linkusdt@kline_1m/trxusdt@kline_1m"
 
 # --- Kafka Producer Setup ---
 producer_config = {
