@@ -9,3 +9,9 @@ docker-compose.override.yml
 # Persistent data volumes (DO NOT PUSH THESE)
 prometheus_data/
 grafana_data/
+
+# RSA Keys (SECURITY - DO NOT PUSH)
+rsa_key.p8
+rsa_key.pub
+*.p8
+*.pem
