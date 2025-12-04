@@ -1,4 +1,4 @@
-# 🚀 Real-time Cryptocurrency Monitoring Stack
+# 🚀 Real-time Cryptocurrency Monitoring & ELT Stack
 
 A robust, containerized pipeline for real-time monitoring and historical analysis of cryptocurrency OHLC (Open, High, Low, Close) candle data from Binance.
 
@@ -6,13 +6,17 @@ A robust, containerized pipeline for real-time monitoring and historical analysi
 
 ## 🏗️ System Architecture
 
-The pipeline consists of four main stages:
+The pipeline consists of two parallel flows:
 
-1.  **Ingestion**: `ohlc-exporter` connects to Binance WebSocket API.
-2.  **Streaming**: Kafka acts as the central message broker.
-3.  **Processing**:
-    *   `prometheus-consumer`: Aggregates real-time metrics.
-4.  **Visualization**: Grafana dashboards powered by Prometheus.
+### 1. Real-time Monitoring Flow
+*   **Source**: `ohlc-exporter` connects to Binance WebSocket API.
+*   **Broker**: Kafka acts as the central message bus.
+*   **Aggregator**: `prometheus-consumer` reads from Kafka and exposes metrics.
+*   **Visualization**: Grafana dashboards powered by Prometheus.
+
+### 2. ELT Data Pipeline (Snowflake)
+*   **Ingestion**: **Kafka Connect** streams raw JSON data from Kafka to Snowflake (`binance_kline` table).
+*   **Transformation**: **dbt** (running in a Docker container) parses the raw JSON and creates a structured, deduplicated `STREAMED_OHLCV` table every hour.
 
 ---
 
@@ -22,7 +26,7 @@ The pipeline consists of four main stages:
 |---------|------|-------------|-------------|
 | **Grafana** | `3000` | Main Dashboard UI | `admin` / `password` |
 | **Prometheus** | `9090` | Metrics Query UI | - |
-| **Metrics** | `9001` | Raw Consumer Metrics | - |
+| **Kafka Connect** | `8083` | Connector REST API | - |
 | **Kafka** | `9092` | Message Broker | - |
 
 ---
@@ -30,41 +34,49 @@ The pipeline consists of four main stages:
 ## 📂 Project Structure & File Descriptions
 
 ### Root Directory
-*   **`docker-compose.yml`**: The orchestration file. Defines all services, networks, and volumes. Includes profiles to disable Airflow by default to save resources.
+*   **`docker-compose.yml`**: The orchestration file. Defines all services (Kafka, Connect, dbt, Prometheus, Grafana).
 
 ### 📡 OHLC Exporter (`ohlc-exporter/`)
 *   **`binance_exporter.py`**: The data source. Connects to Binance WebSocket, filters for closed 1-minute candles, and produces JSON messages to Kafka topic `binance_kline`.
-*   **`Dockerfile`**: Builds the Python environment for the exporter.
 
 ### ⚡ Prometheus Consumer (`prometheus-consumer/`)
-*   **`prometheus_consumer.py`**: Real-time processor. Consumes Kafka messages, updates Prometheus Gauge metrics (Price, Volume), and handles connection retries.
-*   **`Dockerfile`**: Builds the consumer container.
+*   **`prometheus_consumer.py`**: Real-time processor. Consumes Kafka messages and updates Prometheus Gauge metrics.
+
+### ❄️ Kafka Connect (`connectors/`)
+*   **`snowflake-sink.json`**: Configuration for the Snowflake Sink Connector. Defines how data moves from Kafka to Snowflake.
+
+### 🛠️ dbt Transformation (`dbt_project/`)
+*   **`models/staging/stg_binance_kline.sql`**: View that parses raw JSON from Snowflake into columns.
+*   **`models/marts/streamed_ohlcv.sql`**: Incremental table that deduplicates and stores the final analytical data.
+*   **`run_loop.sh`**: Script that runs `dbt run` every hour inside the `dbt-runner` container.
 
 ### 📊 Configuration (`grafana/`, `prometheus/`)
-*   **`prometheus/prometheus.yml`**: Configures Prometheus to scrape metrics from the `prometheus-consumer` service.
-*   **`grafana/datasources/prometheus.yml`**: Auto-configures Prometheus as a data source in Grafana.
-*   **`grafana/provisioning/dashboards/provider.yml`**: Auto-loads dashboards from the local directory.
-
-### 🌪️ Airflow (`airflow/`)
-*   **`dags/`**: Directory for Airflow DAGs (Airflow is currently disabled by default).
+*   **`prometheus/prometheus.yml`**: Scrape config for Prometheus.
+*   **`grafana/dashboards/`**: Contains the JSON definition for the "Cryptocurrency OHLC Live Dashboard".
 
 ---
 
 ## 🚀 How to Run
 
-### 1. Start the Stack
+### 1. Prerequisites
+*   **Docker & Docker Compose** installed.
+*   **Snowflake Account** with Key Pair Authentication configured.
+*   **RSA Key**: Place your `rsa_key.p8` file in the root directory (it is gitignored).
+
+### 2. Start the Stack
 ```bash
 docker-compose up -d
 ```
 
-### 2. Verify Data Flow
-*   **Grafana**: [http://localhost:3000](http://localhost:3000)
-*   **Prometheus**: [http://localhost:9090](http://localhost:9090)
+### 3. Verify Data Flow
+*   **Grafana**: [http://localhost:3000](http://localhost:3000) (Real-time charts)
+*   **Kafka Connect**: Check status of the connector:
+    ```bash
+    curl localhost:8083/connectors/snowflake-sink/status
+    ```
+*   **Snowflake**: Query the `STREAMED_OHLCV` table to see structured data arriving.
 
-*   **Kafka**: [http://localhost:9092](http://localhost:9092)
-
-
-### 3. Stop the Stack
+### 4. Stop the Stack
 ```bash
 docker-compose down
 ```
