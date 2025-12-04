@@ -11,6 +11,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       },
       {
@@ -19,11 +25,14 @@
           "uid": "ff37xvoluc6wwb"
         },
         "enable": true,
-        "expr": "abs(close_price_1m_stats - close_price_1m_stats offset 1m) / close_price_1m_stats offset 1m > 0.02",
-        "hide": false,
+        "hide": true,
         "iconColor": "red",
-        "name": "Price Spike (>2%)",
-        "step": "60s"
+        "name": "Price Spike (>0.5%)",
+        "target": {
+          "expr": "abs(close_price_1m_stats - close_price_1m_stats offset 1m) / close_price_1m_stats offset 1m > 0.005",
+          "interval": "60s",
+          "refId": "Anno"
+        }
       }
     ]
   },
@@ -1669,5 +1678,5 @@
   "timezone": "browser",
   "title": "Cryptocurrency OHLC Live Dashboard",
   "uid": "ads7sjv",
-  "version": 10
+  "version": 12
 }

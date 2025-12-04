@@ -15,3 +15,6 @@ rsa_key.p8
 rsa_key.pub
 *.p8
 *.pem
+
+# dbt
+dbt_project/profiles.yml

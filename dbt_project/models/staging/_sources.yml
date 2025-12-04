@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: snowflake
+    database: CRYPTO_DB
+    schema: PUBLIC
+    tables:
+      - name: binance_kline
