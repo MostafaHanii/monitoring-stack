@@ -1,0 +1,14 @@
+crypto_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "LLYLBEZ-LC73002"
+      user: "ADMIN"
+      private_key_path: "/usr/app/rsa_key.p8"
+      role: ACCOUNTADMIN
+      database: CRYPTO_DB
+      warehouse: COMPUTE_WH
+      schema: PUBLIC
+      threads: 1
+      client_session_keep_alive: False

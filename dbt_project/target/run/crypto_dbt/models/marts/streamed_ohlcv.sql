@@ -1,21 +1,37 @@
-
+-- back compat for old kwarg name
   
+  begin;
+    
+        
+            
+                
+                
+            
+                
+                
+            
+        
     
 
-create or replace transient table CRYPTO_DB.PUBLIC.streamed_ohlcv
     
+
+    merge into CRYPTO_DB.PUBLIC.streamed_ohlcv as DBT_INTERNAL_DEST
+        using CRYPTO_DB.PUBLIC.streamed_ohlcv__dbt_tmp as DBT_INTERNAL_SOURCE
+        on (
+                    DBT_INTERNAL_SOURCE.ASSET_SYMBOL = DBT_INTERNAL_DEST.ASSET_SYMBOL
+                ) and (
+                    DBT_INTERNAL_SOURCE.OPEN_TIME = DBT_INTERNAL_DEST.OPEN_TIME
+                )
+
     
+    when matched then update set
+        "ASSET_SYMBOL" = DBT_INTERNAL_SOURCE."ASSET_SYMBOL","OPEN_TIME" = DBT_INTERNAL_SOURCE."OPEN_TIME","OPEN" = DBT_INTERNAL_SOURCE."OPEN","HIGH" = DBT_INTERNAL_SOURCE."HIGH","LOW" = DBT_INTERNAL_SOURCE."LOW","CLOSE" = DBT_INTERNAL_SOURCE."CLOSE","VOLUME" = DBT_INTERNAL_SOURCE."VOLUME","CLOSE_TIME" = DBT_INTERNAL_SOURCE."CLOSE_TIME","QUOTE_ASSET_VOLUME" = DBT_INTERNAL_SOURCE."QUOTE_ASSET_VOLUME","NUM_TRADES" = DBT_INTERNAL_SOURCE."NUM_TRADES","TAKER_BUY_BASE_VOLUME" = DBT_INTERNAL_SOURCE."TAKER_BUY_BASE_VOLUME","TAKER_BUY_QUOTE_VOLUME" = DBT_INTERNAL_SOURCE."TAKER_BUY_QUOTE_VOLUME","IGNORE" = DBT_INTERNAL_SOURCE."IGNORE","KAFKA_OFFSET" = DBT_INTERNAL_SOURCE."KAFKA_OFFSET"
     
-    as (
 
-SELECT *
-FROM CRYPTO_DB.PUBLIC.stg_binance_kline
+    when not matched then insert
+        ("ASSET_SYMBOL", "OPEN_TIME", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME", "CLOSE_TIME", "QUOTE_ASSET_VOLUME", "NUM_TRADES", "TAKER_BUY_BASE_VOLUME", "TAKER_BUY_QUOTE_VOLUME", "IGNORE", "KAFKA_OFFSET")
+    values
+        ("ASSET_SYMBOL", "OPEN_TIME", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME", "CLOSE_TIME", "QUOTE_ASSET_VOLUME", "NUM_TRADES", "TAKER_BUY_BASE_VOLUME", "TAKER_BUY_QUOTE_VOLUME", "IGNORE", "KAFKA_OFFSET")
 
-
-
-qualify row_number() over (partition by ASSET_SYMBOL, OPEN_TIME order by kafka_offset desc) = 1
-    )
 ;
-
-
-  
+    commit;

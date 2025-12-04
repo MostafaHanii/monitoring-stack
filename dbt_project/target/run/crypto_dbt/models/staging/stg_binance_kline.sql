@@ -1,10 +1,7 @@
 
   create or replace   view CRYPTO_DB.PUBLIC.stg_binance_kline
   
-  
-  
-  
-  as (
+   as (
     SELECT
     -- Parse JSON fields and map to target schema
     record_content:data:k:s::string as ASSET_SYMBOL,

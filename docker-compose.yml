@@ -104,75 +104,19 @@ services:
         /etc/confluent/docker/run
     restart: unless-stopped
 
-  # ========================================
-  # AIRFLOW SERVICES
-  # ========================================
-
-  airflow-postgres:
-    image: postgres:13
-    container_name: airflow-postgres
-    profiles:
-      - airflow
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
+  # dbt Runner - Automates dbt runs every hour
+  dbt-runner:
+    build:
+      context: ./dbt_project
+      dockerfile: Dockerfile
+    container_name: dbt-runner
     volumes:
-      - airflow_postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  airflow-init:
-    image: apache/airflow:2.7.0
-    container_name: airflow-init
-    profiles:
-      - airflow
-    depends_on:
-      - airflow-postgres
+      - ./dbt_project:/usr/app
+      - ./rsa_key.p8:/usr/app/rsa_key.p8 # Mount key for auth
+      - ./dbt_project/profiles_docker.yml:/usr/app/profiles.yml # Override with Docker profile
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    command: >
-      bash -c "airflow db init &&
-               airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true"
-    restart: on-failure
-
-  airflow-webserver:
-    image: apache/airflow:2.7.0
-    container_name: airflow-webserver
-    profiles:
-      - airflow
-    depends_on:
-      - airflow-postgres
-      - airflow-init
-    ports:
-      - "8080:8080"
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-    command: webserver
-    restart: unless-stopped
-
-  airflow-scheduler:
-    image: apache/airflow:2.7.0
-    container_name: airflow-scheduler
-    profiles:
-      - airflow
-    depends_on:
-      - airflow-postgres
-      - airflow-init
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-    command: scheduler
+      - DBT_PROFILES_DIR=/usr/app
+    command: bash -c "chmod +x run_loop.sh && ./run_loop.sh"
     restart: unless-stopped
 
   # ========================================
@@ -214,4 +158,4 @@ volumes:
   prometheus_data:
   grafana_data:
 
-  airflow_postgres_data:
+
