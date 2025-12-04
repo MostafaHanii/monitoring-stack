@@ -8,7 +8,7 @@ This plan outlines the implementation of a robust streaming pipeline from Kafka 
 > **Snowflake Credentials**: You will need a Snowflake account. The connector requires:
 > - `snowflake.url.name` (e.g., `xy12345.us-east-1.aws.snowflakecomputing.com`)
 > - `snowflake.user.name`
-> - `snowflake.private.key` (Best practice) or Password.
+> - `snowflake.private.key` (Best practice) or Password. **[See Setup Guide](file:///d:/monitoring-stack/docs/snowflake_key_setup.md)**
 > - `snowflake.database.name`
 > - `snowflake.schema.name`
 
