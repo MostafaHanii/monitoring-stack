@@ -1,0 +1,19 @@
+{
+    "name": "snowflake-sink",
+    "config": {
+        "connector.class": "com.snowflake.kafka.connector.SnowflakeSinkConnector",
+        "tasks.max": "1",
+        "topics": "binance_kline",
+        "buffer.count.records": "10000",
+        "buffer.flush.time": "60",
+        "buffer.size.bytes": "5000000",
+        "snowflake.url.name": "https://llylbez-lc73002.snowflakecomputing.com",
+        "snowflake.user.name": "admin",
+        "snowflake.private.key": "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCWT9UFkOkhpFOJO+QlW7V7kjtf8Sbct4SIihqkLKtn1ZUSKfbR7sveDkZXl0QpPQQ3QElyFCiKxdWS5A1PyXVNwOjcImoZXctZls4ZCizqWyEPZ0dc2DOTCFi498xKNxraM14Pr1rZbudaK4iyY9vjEPOJCCXCNSDRxJ0nSb3ABDiY7d1NQ9hsCJujN0OobcgDiUSohyZO7PkUY9U2TOwq9BTAVt4iSyIoMcGBjr71JOqKfPFCF/flCfgfSYxY0A07QF0TksqnpBr0BzhEhQqOFywha5mSFVHgUoY1PlI2WxQATxNq6SGaKR1YRsmSnCeoLwX6gQEN3o7TrgRDZdOzAgMBAAECggEAM/goG8ONh08sfr9RU0VRCwd1NefH2vosfZTaPzcekEj9QIl3x/+7RuxCj9hB/cwV4BB/FE058zkRbbchjxuFTjvLhwjzDBAs1a3ZVjj5bJHTbWL0/nnV4xk4q8MpQ+OnihfGhr/HNnQs0zVIDv2NsgVTXmaNv4bk8QH8n+/UBkYnekzH7gLfiAlOy9V9mZIT3/TS679pNLmOq4mX15UrMsHDDHh3Zv75IAs60nWvX4LzvQ8VW+n9/4n0DC00kuFiDGTd/sutLOwfqSOJndoPt1eJyrfq/2cJweSdvqMG5LBLbOdFCIjGRPwFdsfNXxo0H3/MP1zjPRONsZAWjtdquQKBgQDPltWOhfs1P22299XCMV9hf638ApTMopRLfEu1kvo023ldWzJCKU2K1aSkZYrSj54E0Mmgy0MDuBdNjGPxUhkDXMxYbs64s8HI7RtVEgHZtl/VTJWum8YUdDaiTehuL6v4kg4ZMp9EWFeVy4KfQXXJxbW9KWQTJxp4P5Q4KhXGDQKBgQC5XYPT3tp812Lynu1kU7VpsHyhi5W4EOOx3RlcsKeQ6NxSTGrT0CfVLbF+nTlgOIjtnHmFSDZsEDTdmAX3N2jbjMgGdIE7WlSUyJmKIZpj7WfEK4Fg6LTXKlnI0dOqKUmYCI2flCd8o81d5Yf6vhEZ+eJNOKJuJQ3JiVvgpo9QvwKBgFfyKhWQk6WycpPimZAFBMi0pAwxN8MeWb9FMHoDg7cjCF7RxRAcmXppGrB/SHn+WE7n+ZQCqSiJNG4pPSo+wtQW24fXogLEPSQXt82prFkFF8KxCHUKD7gYqBDI+uC7l5rendR1Ct6Uor6WkodP30wVU/KI95nZpjAtl2jYA5N9AoGBAISRQrSFztA14ggObUyxKS77D0chYuQPACi2LWtC07QpNViOWmA9oB8v3J7mpqAQDq2QmMAfUvyZ4pUQIkQZlp5d4rfrHnlqMs9tX5GQUrBgmzOKwa6i/qJbIXcjyTMK8B0REOgttsfHBhq/Cy7iO6zOL3B2roQDcAbQe6sAs8JVAoGAQLLZsXv8GX05cVNLtOETNBWTLAvzDpmorgXt8Qg+ym5MZm7KnBBDX+ke4nLKSm6xUEfWUhejhbTL92R0wCGxjy0fV6ZBsGryt24EhgXOmlZp9Kjh36zdnB3UVIYocT3yC3xCZW+wIa5QSlnMeyYFro+EELw81QW+CZR9C7GXCaU=",
+        "snowflake.database.name": "CRYPTO_DB",
+        "snowflake.schema.name": "PUBLIC",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "false"
+    }
+}
