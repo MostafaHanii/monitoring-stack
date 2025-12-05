@@ -113,6 +113,7 @@ gauge_timestamp = Gauge(
 # --- Message Processing ---
 def process_message(message_value):
     """Parse Kafka message and update Prometheus metrics"""
+    symbol = "unknown"
     try:
         data = json.loads(message_value)
         kline = data.get("data", {}).get("k", {})
@@ -120,7 +121,7 @@ def process_message(message_value):
         if not kline:
             return False
         
-        symbol = kline.get("s")
+        symbol = kline.get("s", "unknown")
         interval = kline.get("i")
         
         open_price = float(kline.get("o"))
@@ -159,8 +160,10 @@ def consume_messages():
             messages = consumer.consume(num_messages=100, timeout=1.0)
             
             batch_count = 0
-
+            
+            
             for msg in messages:
+                total_message.inc()
                 if msg is None:
                     continue
                 if msg.error():
@@ -175,10 +178,13 @@ def consume_messages():
                 gauge_message_processing_latency.set(time.time() - start_proc)
                 
                 batch_count += 1
-
+                
+                
                 if success:
                     consumer.commit(message=msg)
-                    total_message.inc()
+                    messages_processed.inc()
+                else:
+                    failed_messages.labels(symbol=symbol).inc()
                 last_message_time = time.time()
                 
         
