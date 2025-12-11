@@ -14,9 +14,9 @@ from websocket import create_connection, WebSocketConnectionClosedException
 # --- Configuration ---
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
 KAFKA_TOPIC = os.environ.get("KAFKA_TOPIC", "binance_kline")
-KAFKA_ACKS = os.environ.get("KAFKA_ACKS" , "all")
-KAFKA_RETRIES = os.environ.get("KAFKA_RETRIES",3)
-KAFKA_IDEMPOTENCE = os.environ.get("KAFKA_IDEMPOTENCE",True)
+KAFKA_ACKS = os.environ.get("KAFKA_ACKS", "all")
+KAFKA_RETRIES = int(os.environ.get("KAFKA_RETRIES", "3"))
+KAFKA_IDEMPOTENCE = os.environ.get("KAFKA_IDEMPOTENCE", "True").lower() == "true"
 
 # --- Logging Setup ---
 logging.basicConfig(

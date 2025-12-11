@@ -7,7 +7,7 @@ import logging
 import os
 import time
 from confluent_kafka import Consumer, KafkaError
-from prometheus_client import start_http_server, Gauge, Counter
+from prometheus_client import start_http_server, Gauge
 
 # --- Configuration ---
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
@@ -64,16 +64,6 @@ def init_kafka_consumer():
 
 # --- Prometheus Metrics ---
 
-
-gauge_message_processing_latency = Gauge('kafka_message_processing_latency_seconds', 'Time taken to process each message')
-total_message = Counter('kafka_consumer_message_total', 'Number of messages ')
-gauge_idle_time = Gauge('kafka_consumer_idle_seconds', 'Seconds since last message was received')
-failed_messages = Counter('kafka_messages_failed_total', 'total failed messages', ['symbol'])
-messages_processed  = Counter('kafka_messages_processed_total', 'total processed messages', ['symbol'])
-gauge_consumer_lag  = Gauge('kafka_consumer_lag', 'Current consumer lag per topic and partition', ['topic','partition'])
-
-
-
 gauge_close = Gauge(
     'close_price_1m_stats',
     'The 1m close price stats',
@@ -113,15 +103,16 @@ gauge_timestamp = Gauge(
 # --- Message Processing ---
 def process_message(message_value):
     """Parse Kafka message and update Prometheus metrics"""
-    symbol = "unknown"
+    symbol = "UNKNOWN"
     try:
         data = json.loads(message_value)
         kline = data.get("data", {}).get("k", {})
         
         if not kline:
-            return False
+            logger.warning(f"No kline data in message: {message_value[:100]}")
+            return False, symbol
         
-        symbol = kline.get("s", "unknown")
+        symbol = kline.get("s", "UNKNOWN")
         interval = kline.get("i")
         
         open_price = float(kline.get("o"))
@@ -140,69 +131,42 @@ def process_message(message_value):
         gauge_timestamp.labels(symbol=symbol, interval=interval).set(close_time)
         
         logger.info(f"Updated metrics: {symbol} - Close: {close_price}")
-        return True
+        return True, symbol
         
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON: {e}")
+        return False, symbol
+    except (ValueError, TypeError) as e:
+        logger.error(f"Data conversion error for {symbol}: {e}")
+        return False, symbol
     except Exception as e:
-        logger.error(f"Error processing message: {e}")
-        return False
+        logger.error(f"Error processing message for {symbol}: {e}")
+        return False, symbol
 
 
 # --- Main Consumer Loop ---
 def consume_messages():
     """Main consumer loop"""
     logger.info("Starting Kafka consumer...")
-    last_message_time = time.time()
 
     try:
         while True:
-
-            batch_start = time.time()
             messages = consumer.consume(num_messages=100, timeout=1.0)
             
-            batch_count = 0
-            
-            
             for msg in messages:
-                total_message.inc()
                 if msg is None:
                     continue
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         continue
                     else:
-                        logging.error(f"❌ Kafka error: {msg.error()}")
+                        logger.error(f"Kafka error: {msg.error()}")
                         continue
                 
-                start_proc = time.time()
-                success = process_message(msg.value().decode('utf-8'))
-                gauge_message_processing_latency.set(time.time() - start_proc)
-                
-                batch_count += 1
-                
+                success, symbol = process_message(msg.value().decode('utf-8'))
                 
                 if success:
                     consumer.commit(message=msg)
-                    messages_processed.inc()
-                else:
-                    failed_messages.labels(symbol=symbol).inc()
-                last_message_time = time.time()
-                
-        
-            # Update idle time
-            gauge_idle_time.set(time.time() - last_message_time)
-            
-
-            
-
-            
-            # Consumer lag
-            for tp in consumer.assignment():
-                committed_tp = consumer.committed([tp])[0]
-                current = committed_tp.offset if committed_tp is not None else 0
-                low, high = consumer.get_watermark_offsets(tp)
-                consumer_lag = high - current
-                gauge_consumer_lag.labels(topic=tp.topic, partition=str(tp.partition)).set(consumer_lag)
-
 
     except KeyboardInterrupt:
         logger.info("Consumer stopped by user")
