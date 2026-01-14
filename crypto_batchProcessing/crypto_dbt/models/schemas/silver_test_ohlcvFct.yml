@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: ohlcv_fct
+    description: 'OHLCV Testing Relations, final columns'
+    tests: 
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['base_asset_fk','open_date','open_time']
+    columns:
+      - name: ohlcv_sk
+        tests: ['not_null','unique']
+      
+      # relations test
+      - name: open_date_fk
+      # add description
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('date_dim')
+                field: date_sk
+      - name: open_time_fk
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('time_dim')
+                field: time_sk
+      - name: base_asset_fk
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('assets_dim')
+                field: asset_sk
+
+         

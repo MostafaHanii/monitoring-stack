@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: stg_assets
+    description: "staging cleansing of assets"
+    columns:
+      - name: asset_id
+        tests: [not_null]
+      - name: symbol
+        tests: [not_null]
+      - name: market_cap_based_rank
+        tests: [not_null]
+      - name: dbt_valid_from
+        tests: [not_null]
+      
+      
+
+  - name: stg_ohlcv
+    description: "staging of OHLCV"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['asset_pair_symbol','open_time','open_date']
+    columns:
+      - name: asset_pair_symbol
+        tests: [not_null]
+      - name: base_asset_symbol
+        tests: [not_null]
+      - name: quote_asset_symbol
+        tests: 
+          - accepted_values:
+              arguments:
+                values: ['USDT']
+      - name: open_date
+        tests: [not_null]
+      - name: open_time
+        tests: [not_null]
+      - name: close_date
+        tests: [not_null]
+      - name: close_time
+        tests: [not_null]
+
+        
+      

@@ -1,0 +1,488 @@
+1) Clear — What insights you can get from OHLCV (plain language)
+
+(These are the things OHLCV can tell you that matter for an analyst / dashboard viewer)
+
+Price / Trend
+
+Long- and medium-term trend: is the asset generally going up, down, or flat?
+
+Hourly momentum: how strong was each hour’s move?
+
+Volatility / Risk
+
+How “bumpy” the price is inside each hour (big swings = high volatility).
+
+Historical volatility trend (is the market getting calmer or wilder?).
+
+Volume & Liquidity
+
+How much money/asset traded in each hour (how liquid is the market?).
+
+Aggressive buying vs selling (which side initiated trades).
+
+Volume spikes that often accompany real moves.
+
+Candle structure & market psychology
+
+Candle type (bullish/bearish/doji) — shows buyer/seller control or indecision during the hour.
+
+Wick sizes — rejection zones where price was pushed back (potential support/resistance).
+
+Trend confirmation & signals
+
+MA crossovers (short MA vs long MA) — short-term vs medium-term trend alignment.
+
+Price + volume confirmation (price up + volume up is stronger than price up with low volume).
+
+High-level performance
+
+Cumulative return from start date (how much $1 invested would have grown).
+
+Percent of time the market was UP/DOWN/SIDEWAYS.
+
+Time patterns & sessions
+
+Hour-of-day / day-of-week patterns (when is activity highest?).
+
+Seasonality across months/years (bull markets vs bear markets).
+
+Derived business signals
+
+Breakout vs fakeout detection (big candle + volume spike = likely real breakout).
+
+Liquidity stress (big move + low volume = risky, high slippage).
+
+2) Organized list of measures to compute in GOLD (grouped and precise)
+
+I’ll give the field name and a one-line explanation. These are the exact columns your Gold table should include.
+---------------------------------------------------------
+A — Basic price + identity done
+
+ohlcv_sk — surrogate PK (unique per candle)
+
+asset_pair_symbol, base_asset_symbol, quote_asset_symbol
+
+period_start, period_end (timestamp)
+---------------------------------------------------------
+B — Returns / Trend done
+
+open, high, low, close
+
+return_abs = close - open (USD/quote change)
+
+return_pct = (close - open) / open
+
+cumulative_return = ∏(1 + return_pct) - 1 (compounded from series start)
+
+C — Moving averages / trend smoothing
+
+ma_10 = average(close over last 10 periods)
+
+ma_20 = average(close over last 20 periods)
+
+ma_trend = categorical (MA10>MA20 → bullish; MA10<MA20 → bearish; else sideways)
+
+ma_crossover_flag = flag when MA10 crosses MA20 this candle
+---------------------------------------------------------
+D — Candle geometry (structure) done
+
+candle_range = high - low
+
+range_pct = (high - low) / open
+
+body_size = abs(close - open)
+
+upper_wick = high - max(open, close)
+
+lower_wick = min(open, close) - low
+
+candle_type = doji / bullish / bearish (rule: small body -> doji, else close>open -> bullish)
+---------------------------------------------------------
+E — Volatility
+
+true_range = max(high-low, abs(high-prev_close), abs(low-prev_close))
+
+atr_14 = average(true_range over 14 periods)
+
+rolling_vol_10 = stddev(close over 10 periods)
+
+rolling_vol_20 = stddev(close over 20 periods)
+
+volatility_label = categorical (Low / Normal / High) based on thresholds
+---------------------------------------------------------
+F — Volume & liquidity
+
+base_asset_volume (VOLUME) — base units traded in candle
+
+quote_asset_volume — quote currency traded
+
+volume_sma_20 = avg(quote_asset_volume over 20 periods)
+
+volume_spike_flag = quote_asset_volume > k * volume_sma_20 (k=2 default)
+
+vwap_proxy = (high + low + close)/3 (use real VWAP from trades if available)
+---------------------------------------------------------
+G — Buy / Sell pressure (aggregated)
+
+taker_buy_base_volume
+
+taker_buy_quote_volume
+
+buy_ratio_quote = taker_buy_quote_volume / quote_asset_volume (null safe)
+
+buy_ratio_base = taker_buy_base_volume / base_asset_volume (null safe)
+
+sell_ratio_quote = 1 - buy_ratio_quote
+
+aggression_index = abs(buy_ratio_base - 0.5) * base_asset_volume (higher = one side dominating)
+
+rolling_buy_ratio_5 = avg(buy_ratio_quote over 5 periods)
+---------------------------------------------------------
+H — Signals & flags
+
+breakout_flag = volume_spike_flag AND candle_range or return_pct above threshold
+
+liquidity_stress_flag = large return_pct && low volume_sma_20
+
+whale_proxy = (if you later add trades agg) max_trade_size / avg_trade_size per candle
+---------------------------------------------------------
+I — Metadata
+num_trades, loaded_at done
+
+
+
+
+
+first insight in dashboard:
+✔ return_pct
+
+Shows if the candle was bullish or bearish.
+
+✔ ma_10 and ma_20
+
+Smooth the price curve → you clearly see real trend direction.
+MA crossovers are strong trading signals:
+
+MA10 > MA20 = bullish
+
+MA10 < MA20 = bearish
+
+✔ cumulative_return
+
+Tells you how much the asset grew since 2020.
+
+BTC cumulative return example: +450%
+
+ETH cumulative return example: +900%
+
+This is the main metric investors care about.
+
+✔ trend_direction
+
+Gives clean color labels for Power BI visuals.
+------------------------------------------------------------------------------------------------
+second insight
+
+🎯 Why these measures are useful for analysis and dashboard
+Volatility Detection
+
+Range, % range, body, wick sizes
+→ show how aggressive the market is.
+
+Market Sentiment
+
+Bullish/bearish candles → price direction
+
+Doji → indecision / potential reversal
+
+Trader Behavior Insight
+
+Long wicks → rejection zones
+
+Small bodies → consolidation
+
+Large bodies → strong trend periods
+
+Dashboard Visualizations
+
+These metrics allow you to build:
+
+📌 Candle chart with classifications
+📌 Volatility heatmap
+📌 Trend strength over time
+📌 Signal zones (rejections, breakouts)
+
+| Feature                               | Candle-Type Logic    | MA10 vs MA20 Trend      |                    |
+| ------------------------------------- | -------------------- | ----------------------- | ------------------ |
+| Based on                              | ONE single candle    | MANY candles (10 vs 20) |                    |
+| Time horizon                          | Extremely short-term | Medium-to-long-term     |                    |
+| What it detects                       | Candle sentiment     | Market trend direction  |                    |
+| Can one strange candle change result? | YES                  | NO                      |                    |
+| Is it noisy?                          | YES                  | Very noisy              | NOT noisy (smooth) |
+--------------------------------------------------------------------------------------
+
+2) Analytical questions we must answer (prioritized)
+
+These become the sections & KPIs of the dashboard.
+-------------------------------------------------------------------------
+A — Market health & trend (core)
+
+Is the asset in a bullish, bearish, or sideways regime over selected horizon?
+
+How much did $1 invested at start (Jan 2020) grow (cumulative return) by asset/year?
+
+When did major trend shifts occur (golden/death cross timestamps)?
+-------------------------------------------------------------------------
+B — Momentum & signal quality
+
+Where are MA crossovers, RSI overbought/oversold, MACD signals?
+
+For each signal, what happened in the next 1h/24h/7d (avg return)?
+-------------------------------------------------------------------------
+C — Volume & liquidity
+
+When did volume spike relative to historical average?
+
+Who is controlling the market—buyers or sellers (taker buy ratios)?
+
+Are big moves supported by volume or low-liquidity stress?
+-------------------------------------------------------------------------
+D — Volatility & risk
+
+When was volatility high/low (ATR, rolling stddev)?
+
+Are volatile periods clustered before big returns?
+
+Where was liquidity stress (big returns with low volume)?
+-------------------------------------------------------------------------
+E — Microstructure / whales (advanced)
+
+Were major candles caused by a few large trades? (whale proxies from trade-agg)
+
+How often did trades-per-second spike during major events?
+------------------------------------------
+------------------------------------------
+
+✔ Stakeholder Needs
+A) Market Performance
+
+Are assets growing or losing value over time?
+
+Which coins are performing the best?
+
+Which ones are the most stable?
+
+B) Risk & Volatility
+
+Which assets are too volatile?
+
+When do volatility spikes happen?
+
+Are there early warning signs of crashes or pumps?
+
+C) Trading Activity & Liquidity
+
+Is trading volume high or drying up?
+
+Are buyers or sellers dominating?
+
+When do big players ("whales") enter?
+
+D) Trend Detection
+
+When does a bullish or bearish trend start?
+
+Did we see crossovers like Golden Cross / Death Cross?
+
+Are there breakouts or reversals?
+
+E) Events Analysis
+
+What happened on key historical dates?
+
+How did assets behave after signals (like MACD or volume spikes)?
+
+Were signals reliable or noisy?
+
+F) Asset Metadata Context
+
+From assets dimension:
+
+What type of asset is this?
+
+When was it launched?
+
+What’s its supply?
+
+What’s its market rank?
+-----------------------------------------------------------
+final:
+🎯 Business Questions (final list)
+1. Trend & Momentum
+
+Which coins were trending upward/downward historically?
+
+When did trend reversals happen (bullish/bearish crossovers)?
+
+Which coins showed the strongest momentum?
+
+2. Volatility
+
+Which coins were the most volatile during each period?
+
+Did volatility increase before big moves?
+
+Which coins showed stable periods vs high-risk periods?
+
+3. Performance & Returns
+
+How did each coin perform over weeks, months, years?
+
+What is the cumulative return for each coin?
+
+Which coins outperformed others historically?
+
+4. Market Structure
+
+How often did bullish/bearish candlestick structures occur?
+
+When did breakout candles occur?
+
+How often do dojis (indecision) appear before big moves?
+
+5. Liquidity & Volume
+
+Is liquidity improving or declining?
+
+Are there volume spikes? Do they signal breakouts?
+
+Which assets are more liquid compared to others?
+
+6. Buy/Sell Pressure
+
+When is buying pressure dominating?
+
+When is selling pressure dominating?
+
+Did aggressive buying precede major rallies?
+
+7. Risk Monitoring
+
+Which assets show liquidity stress?
+
+Which assets had abnormal volatility clusters?
+
+Are there signs of upcoming major moves?
+------------------------------------------------------------------------------------------
+storytelling:
+
+We have:
+Top 10 coins by market cap
+Quote currency is USDT → simplifies comparisons
+Historical OHLCV data 2020–2024
+Trades data by seconds
+
+The goal: help stakeholders (investors, traders, product managers) understand performance, trends, volatility, and trading dynamics of these coins historically.
+
+| Stakeholder          | Questions / Interests                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Retail trader / user | Which coins are trending? Which ones show breakouts? Which are volatile or risky?           |
+| Portfolio manager    | What is historical return, risk (volatility), and cumulative performance?                   |
+| Product / Business   | Where do users trade most? Which coins have liquidity issues? Where are spikes in activity? |
+traders and Investors: Everyday people or pros who buy/sell crypto. They benefit by reviewing past performance to refine strategies, like spotting when volumes spiked during market hype.
+Crypto Analysts or Researchers: Folks at firms, newsletters, or universities studying market trends. They use it to compare coins and understand behaviors, e.g., during events like the 2022 crypto crash.
+Portfolio Managers or Funds: Teams managing crypto investments for others. They gain insights for risk assessment, like how correlated top coins are (if BTC drops, does ETH too?).
+Business Teams at Exchanges or Apps: Like Binance staff or app developers, who might use it internally to report on popular coins or user interest.
+Educators or Enthusiasts: Beginners learning crypto, benefiting from visual historical overviews without drowning in raw data.
+
+
+Performance and Returns Questions
+Volatility and Risk Questions
+Comparative and Trend Questions
+Sentiment and Pressure Questions
+
+
+
+1. Trend & Momentum
+These questions focus on identifying market directions, signals, and strength using indicators like moving averages, RSI, MACD, and crossovers.
+
+Which coins were trending upward/downward historically?
+When did trend reversals happen (bullish/bearish crossovers)?
+Which coins showed the strongest momentum?
+When did major trend shifts occur (golden/death cross timestamps)?
+Where are MA crossovers, RSI overbought/oversold, MACD signals?
+For each signal, what happened in the next 1h/24h/7d (avg return)?
+When does a bullish or bearish trend start?
+Did we see crossovers like Golden Cross / Death Cross?
+Are there breakouts or reversals?
+*How reliable were momentum signals (e.g., RSI) across different market cycles (bull vs. bear)? (Added for signal quality evaluation.)
+
+2. Volatility & Risk
+These cover price swings, risk assessment, and early warnings using metrics like ATR, rolling stddev, and clusters.
+
+Which coins were the most volatile during each period?
+Did volatility increase before big moves?
+Which coins showed stable periods vs high-risk periods?
+When was volatility high/low (ATR, rolling stddev)?
+Are volatile periods clustered before big returns?
+Where was liquidity stress (big returns with low volume)?
+Which assets are too volatile?
+When do volatility spikes happen?
+Are there early warning signs of crashes or pumps?
+Which assets had abnormal volatility clusters?
+Which assets show liquidity stress?
+Are there signs of upcoming major moves?
+*How did volatility correlate with overall market events (e.g., 2022 crash)? (Added for historical context.)
+
+3. Performance & Returns
+These emphasize growth, comparisons, and long-term value using returns, CAGR, and benchmarks.
+
+How did each coin perform over weeks, months, years?
+What is the cumulative return for each coin?
+Which coins outperformed others historically?
+Are assets growing or losing value over time?
+Which coins are performing the best?
+Which ones are the most stable?
+How much did $1 invested at start (Jan 2020) grow (cumulative return) by asset/year?
+*What was the risk-adjusted return (e.g., Sharpe ratio) for each coin over the full period? (Added for balanced performance view.)
+
+4. Market Structure & Patterns
+These analyze candlestick formations and microstructures for patterns in price action.
+
+How often did bullish/bearish candlestick structures occur?
+When did breakout candles occur?
+How often do dojis (indecision) appear before big moves?
+Is the asset in a bullish, bearish, or sideways regime over selected horizon?
+Were major candles caused by a few large trades? (whale proxies from trade-agg)
+*How did common patterns (e.g., hammers or shooting stars) perform in predicting reversals? (Added for pattern reliability.)
+
+5. Liquidity & Volume
+These assess trading activity, spikes, and comparisons using volumes and trade counts.
+
+Is liquidity improving or declining?
+Are there volume spikes? Do they signal breakouts?
+Which assets are more liquid compared to others?
+When did volume spike relative to historical average?
+Are big moves supported by volume or low-liquidity stress?
+Is trading volume high or drying up?
+How often did trades-per-second spike during major events?
+*How did average daily volume trends differ between top coins (e.g., BTC vs. altcoins)? (Added for cross-coin liquidity insights.)
+
+6. Buy/Sell Pressure & Market Health
+These evaluate dominance of buyers/sellers and overall sentiment using taker ratios and volumes.
+
+When is buying pressure dominating?
+When is selling pressure dominating?
+Did aggressive buying precede major rallies?
+Who is controlling the market—buyers or sellers (taker buy ratios)?
+Are buyers or sellers dominating?
+When do big players ("whales") enter?
+*What was the average taker buy ratio during key market regimes (e.g., bull runs)? (Added for sentiment benchmarking.)
+
+7. Events & Signal Analysis
+These tie signals to outcomes and historical events for reliability checks.
+
+What happened on key historical dates?
+How did assets behave after signals (like MACD or volume spikes)?
+Were signals reliable or noisy?
+*How did top coins react to major external events (e.g., halvings or regulations)? (Added for event-driven insights.)

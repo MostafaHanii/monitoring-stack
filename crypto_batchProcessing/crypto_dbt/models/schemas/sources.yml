@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw_data
+    database: CRYPTO_DB
+    schema: BRONZE
+    tables:
+      - name: ohlcv
+      - name: agg_trades
+      - name: assets
+      - name: date
+      - name: scd_raw_assets
+
+  - name: streamed_data
+    database: CRYPTO_DB
+    schema: PUBLIC
+    tables:
+      - name: streamed_ohlcv

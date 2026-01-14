@@ -1,0 +1,9 @@
+snapshots:
+    - name: scd_raw_assets
+      relation: source('raw_data', 'assets')
+      config:
+        unique_key: id
+        strategy: check
+        check_cols: 
+            - cmc_rank
+

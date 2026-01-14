@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: assets_dim
+    description: "SCD Type 2, on rank of asset"
+    columns:
+      - name: asset_sk
+        tests: [not_null, unique]
+      
+  
+  - name: date_dim
+    description: "date dimension test"
+    columns:
+      - name: date_sk
+        tests: [not_null, unique]
+      - name: full_date
+        tests: [not_null, unique]
+      
+
+  - name: time_dim
+    description: "time dimension test"
+    columns:
+      - name: time_sk
+        tests: [not_null, unique]
+      - name: time_of_day
+        tests: [not_null, unique]
+      
